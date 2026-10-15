@@ -1,0 +1,18 @@
+# Line endings
+#
+# Both halves are read as source — Node for the host half, the browser bundle
+# for the client half — and `.editorconfig` already pins `end_of_line = lf`.
+# Nothing here is platform-dependent: every tracked file is stored *and* checked
+# out as LF, so a stray CRLF cannot silently reappear through a checkout.
+* text=auto eol=lf
+
+# Sources and metadata: stated explicitly on top of the blanket rule, so a file
+# added later can never be classified by content sniffing alone.
+*.ts   text eol=lf
+*.d.ts text eol=lf
+*.css  text eol=lf
+*.mjs  text eol=lf
+*.cjs  text eol=lf
+*.json text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf

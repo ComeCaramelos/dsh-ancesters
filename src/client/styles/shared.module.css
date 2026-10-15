@@ -1,0 +1,1204 @@
+/*
+ * The plugin's own stylesheet — authored as a CSS Module, the same form every
+ * shipped `dsh-client-ui-*` half carries. The build step
+ * (scripts/build-client.mjs) validates it with postcss, minifies it through
+ * esbuild's CSS pipeline, and scopes every class name to `<hash>_<local>`;
+ * the card imports the map (default export) keyed by the local names below.
+ *
+ * All tokens come from the shell's design aliases, so what renders re-themes
+ * with the GUI instead of shipping a palette of its own.
+ *
+ * Since dsh 0.2.0 the configuration lives on the **row** and the Plugins page
+ * renders it inside its own detail section: the page draws the crumb, the icon,
+ * the row title and its description, and wraps the entry's `view: "page"` in a
+ * section of its own. There is therefore no card shell of ours any more — no
+ * bordered card, no disclosure header and no chevron — only what the form
+ * itself is built out of: the two-row field, the filled 36px selector pill, the
+ * disclosure, the row boxes, the icon/link/add buttons and the fetch dialog.
+ * What belongs to this plugin only ever appears in the marked extension block
+ * at the end (the docs link, the flags editor, the probe result line and the
+ * WSL + Windows-executable notice).
+ */
+
+/* ── shared with the reference card ──────────────────────────────────────── */
+
+/* The body is the section's content, not a card: the page already draws the
+ * identity line this used to sit under, and the page's own section already
+ * spaces it, so what is left is a plain vertical stack. */
+.body {
+    flex-direction: column;
+    gap: 10px;
+    display: flex;
+}
+
+/* Two-row field: title + controls inline above, description full-width below.
+ * Shared across all catalog sections (pickers + toggle) for a uniform layout. */
+.field {
+    align-items: flex-start;
+    gap: 4px;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.fieldRow {
+    align-items: center;
+    gap: 8px;
+    display: flex;
+    width: 100%;
+}
+
+.fieldTitle {
+    color: var(--dsw-alias-label-primary);
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 22px;
+    flex: 1;
+    min-width: 0;
+}
+
+.fieldDesc {
+    color: var(--dsw-alias-label-tertiary);
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 18px;
+    width: 100%;
+}
+
+.selector {
+    background: var(--dsw-alias-bg-module-platform);
+    height: 36px;
+    font: inherit;
+    color: var(--dsw-alias-label-primary);
+    cursor: pointer;
+    border: none;
+    border-radius: 18px;
+    align-items: center;
+    gap: 12px;
+    padding: 0 14px;
+    font-size: 14px;
+    line-height: 22px;
+    display: inline-flex;
+}
+
+.selector:hover:not(:disabled) {
+    background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.selector:disabled {
+    cursor: default;
+}
+
+/* The Menu primitive wraps its anchor in its own inline-flex root span
+ * (_root); as a grid item that span blockifies and stretches to the column
+ * width, so the portal list would anchor to the stretched box instead of the
+ * pill. The flex wrapper keeps the root span at the pill's natural size. */
+.selectorWrap {
+    display: flex;
+}
+
+.pillChevron {
+    flex: none;
+}
+
+.row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+/* Stock Button primitive, outline + sm variants (cfgyt module), byte-for-byte:
+ * display/align/gap/base color from _button, border+bg from _outline, size
+ * overrides from _sm. */
+.button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    border: 0.5px solid var(--dsw-alias-border-l3);
+    border-radius: 14px;
+    cursor: pointer;
+    font-size: 12px;
+    line-height: 18px;
+    color: var(--dsw-alias-label-primary);
+    background: transparent;
+    padding: 0 10px;
+    height: 28px;
+}
+
+.button:hover:not(:disabled) {
+    background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.button:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+}
+
+.button:focus-visible {
+    outline: 2px solid var(--dsw-alias-brand-primary);
+    outline-offset: 1px;
+}
+
+.readOnly {
+    color: var(--dsw-alias-label-tertiary);
+    margin: 0;
+    font-size: 12px;
+}
+
+.error {
+    color: var(--dsw-alias-state-error-primary);
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.dot {
+    box-sizing: border-box;
+    corner-shape: round;
+    border-radius: 50%;
+    flex: none;
+    width: 8px;
+    height: 8px;
+    display: inline-block;
+}
+
+.dotError {
+    background: var(--dsw-alias-state-error-primary);
+}
+
+/* The unsaved marker the save line carries while a staged edit is pending. */
+.badge {
+    color: var(--dsw-alias-label-tertiary);
+    background: var(--dsw-alias-bg-layer-1);
+    border-radius: 10px;
+    padding: 1px 8px;
+    font-size: 11px;
+    line-height: 16px;
+    display: inline-flex;
+    align-items: center;
+    flex: none;
+}
+
+.empty {
+    color: var(--dsw-alias-label-tertiary);
+    margin: 0;
+    font-size: 12px;
+}
+
+/* The named picker — same shape as the reference card's catalog: the field row
+ * (title + selection pill) leads, then a collapsed disclosure holding the fetch
+ * action and one bordered row per entry: path, the custom UI name, and a delete
+ * button. The paths drive the wire; the names are only what the user asked to
+ * see.
+ *
+ * The separator rides **between** two catalog blocks — the page's own section
+ * already ends the line the first catalog opens with, so a block never draws a
+ * rule at its own head. */
+.catalog {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    display: flex;
+}
+
+.catalog + .catalog {
+    border-top: 0.5px solid var(--dsw-alias-border-l2);
+    padding-top: 12px;
+}
+
+/* A row list with no disclosure to fold behind lays its action straight into
+ * the block — keep it at its natural width, the way the body's fetch link
+ * keeps its own. */
+.catalog > .linkButton {
+    align-self: flex-start;
+}
+
+/* The flags block carries its two append controls on one line (Restore
+ * defaults + Flags WSL) — the wrapper keeps the single-action width the rule
+ * above gives a list with only one control. */
+.catalog > .linkButtonRow {
+    align-self: flex-start;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.linkButton {
+    box-sizing: border-box;
+    border: none;
+    background: 0 0;
+    color: var(--dsw-alias-label-tertiary);
+    cursor: pointer;
+    border-radius: 14px;
+    align-items: center;
+    height: 28px;
+    padding: 0 10px;
+    font: inherit;
+    font-size: 12px;
+    line-height: 18px;
+    display: inline-flex;
+}
+
+.linkButton:hover:not(:disabled) {
+    background: var(--dsw-alias-interactive-bg-hover);
+    color: var(--dsw-alias-label-secondary);
+}
+
+.linkButton:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.linkButton:focus-visible {
+    outline: 2px solid var(--dsw-alias-brand-primary);
+    outline-offset: 1px;
+}
+
+/* A row list: its row boxes stacked, the add control and the caller's action
+ * line at their natural width underneath. */
+.rowList {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    display: flex;
+}
+
+.rowList > button {
+    align-self: flex-start;
+}
+
+.catalogEntry {
+    border: 0.5px solid var(--dsw-alias-border-l4);
+    background: var(--dsw-alias-bg-module-platform);
+    border-radius: 10px;
+    padding: 6px;
+}
+
+.catalogRow {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 6px;
+    display: grid;
+}
+
+.catalogInput {
+    box-sizing: border-box;
+    border: 0.5px solid var(--dsw-alias-border-l4);
+    background: var(--dsw-alias-bg-layer-1);
+    color: var(--dsw-alias-label-primary);
+    border-radius: 8px;
+    height: 28px;
+    padding: 0 10px;
+    font: inherit;
+    font-size: 14px;
+    line-height: 22px;
+    min-width: 0;
+    width: 100%;
+}
+
+.catalogInput::placeholder {
+    color: var(--dsw-alias-label-dimmed);
+}
+
+.catalogInput:focus-visible {
+    outline: 2px solid var(--dsw-alias-brand-primary);
+    outline-offset: -1px;
+}
+
+.catalogInput:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.iconButton {
+    box-sizing: border-box;
+    width: 28px;
+    height: 28px;
+    color: var(--dsw-alias-label-tertiary);
+    cursor: pointer;
+    background: 0 0;
+    border: none;
+    border-radius: 6px;
+    justify-content: center;
+    align-items: center;
+    display: inline-flex;
+}
+
+.iconButton:hover:not(:disabled) {
+    background: var(--dsw-alias-interactive-bg-hover);
+    color: var(--dsw-alias-label-primary);
+}
+
+.iconButton:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.iconButton:focus-visible {
+    outline: 2px solid var(--dsw-alias-brand-primary);
+    outline-offset: 1px;
+}
+
+.iconButtonDanger:hover:not(:disabled) {
+    background: var(--dsw-alias-interactive-bg-hover-danger);
+    color: var(--dsw-alias-state-error-primary);
+}
+
+.addButton {
+    box-sizing: border-box;
+    border: 0.5px solid var(--dsw-alias-border-l3);
+    color: var(--dsw-alias-label-primary);
+    cursor: pointer;
+    background: 0 0;
+    border-radius: 14px;
+    align-self: flex-start;
+    align-items: center;
+    gap: 4px;
+    height: 28px;
+    padding: 0 10px;
+    font: inherit;
+    font-size: 12px;
+    line-height: 18px;
+    display: inline-flex;
+}
+
+.addButton:hover:not(:disabled) {
+    background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.addButton:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+/* The row boxes sit behind a native <details> disclosure, collapsed by default
+ * (the reference card's "Customized settings" block): the field row and the
+ * dropdown are what the user sees until they open it. */
+.disclosure {
+    flex-direction: column;
+    gap: 10px;
+    display: flex;
+}
+
+.disclosureSummary {
+    color: var(--dsw-alias-label-secondary);
+    cursor: pointer;
+    list-style: none;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    line-height: 18px;
+    user-select: none;
+    display: flex;
+}
+
+.disclosureSummary::-webkit-details-marker {
+    display: none;
+}
+
+.disclosureSummary:focus-visible {
+    outline: 2px solid var(--dsw-alias-brand-primary);
+    outline-offset: 1px;
+    border-radius: 6px;
+}
+
+.disclosureLabel::before {
+    content: "▸";
+    display: inline-block;
+    margin-right: 6px;
+    transition: transform 0.16s;
+}
+
+.disclosure[open] .disclosureLabel::before {
+    transform: rotate(90deg);
+}
+
+.disclosureCount {
+    color: var(--dsw-alias-label-tertiary);
+}
+
+.disclosureBody {
+    flex-direction: column;
+    gap: 10px;
+    display: flex;
+}
+
+/* The fetch action sits inside the body with its rows; keep it at its natural
+ * width instead of stretching across the disclosure. */
+.disclosureBody > .linkButton {
+    align-self: flex-start;
+}
+
+/* The executable block's two actions (and the flags block's two append
+ * controls) ride one line inside the disclosure body. */
+.disclosureBody > .linkButtonRow {
+    align-self: flex-start;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+/* Carries the tooltip for the control the Switch primitive renders inside it
+ * (the primitive takes only `label`, which becomes the control's aria-label).
+ * In the two-row field layout it sits in the top inline row — never stretch. */
+.toggleLabel {
+    align-items: center;
+    display: inline-flex;
+    flex: none;
+}
+
+/* ── the fetch dialog ─────────────────────────────────────────────────────
+ * The executable fetch runs the host's discovery, then opens this modal over
+ * the candidates it answered for — the reference card's "Choose models to
+ * add" shape. The card owns the open state; the dialog owns only its
+ * filter/selection draft. */
+.fetchDialog {
+    background: color-mix(in srgb, var(--dsw-alias-label-primary) 28%, transparent);
+    align-items: center;
+    justify-content: center;
+    display: flex;
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+}
+
+.dialogContent {
+    background: var(--dsw-alias-bg-layer-3);
+    border: 0.5px solid var(--dsw-alias-border-l3);
+    border-radius: 16px;
+    flex-direction: column;
+    gap: 10px;
+    width: min(520px, calc(100vw - 32px));
+    max-height: min(620px, calc(100vh - 48px));
+    display: flex;
+    overflow: hidden;
+}
+
+.dialogHeader {
+    align-items: center;
+    gap: 8px;
+    padding: 14px 16px 0;
+    display: flex;
+}
+
+.dialogTitle {
+    color: var(--dsw-alias-label-primary);
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 22px;
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+}
+
+.dialogClose {
+    box-sizing: border-box;
+    color: var(--dsw-alias-label-tertiary);
+    cursor: pointer;
+    background: 0 0;
+    border: none;
+    border-radius: 6px;
+    justify-content: center;
+    align-items: center;
+    flex: none;
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+}
+
+.dialogClose:hover {
+    background: var(--dsw-alias-interactive-bg-hover);
+    color: var(--dsw-alias-label-primary);
+}
+
+.dialogClose:focus-visible {
+    outline: 2px solid var(--dsw-alias-brand-primary);
+    outline-offset: 1px;
+}
+
+.dialogDescription {
+    color: var(--dsw-alias-label-tertiary);
+    font-size: 12px;
+    line-height: 18px;
+    margin: 0;
+    padding: 0 16px;
+}
+
+.dialogBody {
+    flex-direction: column;
+    flex: 1;
+    gap: 8px;
+    min-height: 0;
+    padding: 0 16px;
+    display: flex;
+}
+
+.candidateToolbar {
+    align-items: center;
+    gap: 8px;
+    display: flex;
+}
+
+.candidateSearch {
+    box-sizing: border-box;
+    border: 0.5px solid var(--dsw-alias-border-l4);
+    background: var(--dsw-alias-bg-layer-1);
+    color: var(--dsw-alias-label-primary);
+    border-radius: 8px;
+    height: 32px;
+    padding: 0 10px;
+    font: inherit;
+    font-size: 12px;
+    line-height: 20px;
+    flex: 1;
+    min-width: 0;
+}
+
+.candidateSearch::placeholder {
+    color: var(--dsw-alias-label-dimmed);
+}
+
+.candidateSearch:focus-visible {
+    outline: 2px solid var(--dsw-alias-brand-primary);
+    outline-offset: -1px;
+}
+
+.candidateList {
+    flex-direction: column;
+    gap: 2px;
+    margin: 0;
+    padding: 0 0 10px;
+    list-style: none;
+    overflow-y: auto;
+    display: flex;
+}
+
+.candidate {
+    border-radius: 8px;
+    padding: 4px 6px;
+}
+
+.candidate:hover {
+    background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.candidateLabel {
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    display: flex;
+}
+
+.candidateLabel input[type="checkbox"] {
+    accent-color: var(--dsw-alias-brand-primary);
+    flex: none;
+    margin: 0;
+}
+
+.candidateId {
+    color: var(--dsw-alias-label-primary);
+    font-size: 12px;
+    line-height: 18px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.candidateNote {
+    color: var(--dsw-alias-label-tertiary);
+    /* A note is prose, not a short status: it shrinks and wraps instead of
+     * pushing the row past the dialog's width. */
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-size: 11px;
+    line-height: 16px;
+}
+
+.dialogFooter {
+    border-top: 0.5px solid var(--dsw-alias-border-l2);
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 12px 16px;
+    display: flex;
+}
+
+/* The stock Button's outline + md shape (the reference footer's two buttons). */
+.dialogButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    border: 0.5px solid var(--dsw-alias-border-l3);
+    border-radius: 16px;
+    cursor: pointer;
+    font-size: 13px;
+    line-height: 20px;
+    color: var(--dsw-alias-label-primary);
+    background: transparent;
+    padding: 0 12px;
+    height: 32px;
+}
+
+.dialogButton:hover:not(:disabled) {
+    background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.dialogButton:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+}
+
+.dialogButton:focus-visible {
+    outline: 2px solid var(--dsw-alias-brand-primary);
+    outline-offset: 1px;
+}
+
+.dialogButtonPrimary {
+    color: var(--dsw-alias-label-primary);
+    font-weight: 600;
+}
+
+/* ── extensions: what the reference card carries no equivalent for ───────── */
+
+/* The selection pill's face is a filesystem path, so it truncates instead of
+ * stretching the field row. */
+.selectorLabel {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+    overflow: hidden;
+}
+
+/* The probe result line: what the last executable run answered with, drawn
+ * directly below the rows that produced it. */
+.result {
+    color: var(--dsw-alias-label-tertiary);
+    margin: 0;
+    font-size: 12px;
+    line-height: 18px;
+}
+
+.resultValue {
+    color: var(--dsw-alias-label-secondary);
+    margin-left: 4px;
+}
+
+/* When the card last probed — the part that changes when the answer does not. */
+.resultAge {
+    color: var(--dsw-alias-label-dimmed);
+    margin-left: 4px;
+}
+
+/* The WSL + Windows-executable notice: the copy is static, so the block only
+ * ever carries the two parts — a heading and the required configuration. It is
+ * not an error surface (nothing failed yet), so it stays in the neutral layer
+ * instead of borrowing the state-error color. */
+.notice {
+    flex-direction: column;
+    gap: 4px;
+    display: flex;
+    border: 0.5px solid var(--dsw-alias-border-l3);
+    border-radius: 10px;
+    background: var(--dsw-alias-bg-layer-1);
+    padding: 8px 10px;
+}
+
+.noticeTitle {
+    color: var(--dsw-alias-label-primary);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 18px;
+}
+
+.noticeBody {
+    color: var(--dsw-alias-label-tertiary);
+    font-size: 12px;
+    line-height: 18px;
+}
+
+/* The configuration-guide link that leads the flags field row. */
+.docsLink {
+    color: var(--dsw-alias-label-tertiary);
+    align-items: center;
+    gap: 4px;
+    display: inline-flex;
+    text-decoration: none;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.docsLinkLabel {
+    text-decoration: none;
+}
+
+.docsLink:hover {
+    color: var(--dsw-alias-brand-primary);
+}
+
+.docsLink:hover .docsLinkLabel {
+    text-decoration: underline;
+}
+
+.docsLink:hover .docsIcon {
+    color: var(--dsw-alias-brand-primary);
+}
+
+.docsIcon {
+    color: var(--dsw-alias-label-tertiary);
+    flex: none;
+}
+
+.docsLink:focus-visible {
+    outline: 2px solid var(--dsw-alias-brand-primary);
+    outline-offset: 1px;
+    border-radius: 4px;
+}
+
+/* The extra-flags rows — the reference card's catalog-row shape read through
+ * the one field a flag actually carries.
+ *
+ * The executable rows split the row between a path and a display name; a flag
+ * row hands its single value the whole width that split would occupy, keeping
+ * only the delete button's track. The shared `.catalogRow` rule above stays
+ * verbatim (it is the reference's two-field shape), so the single-field variant
+ * rides as this extension. */
+.catalogRowSingle {
+    grid-template-columns: minmax(0, 1fr) auto;
+}
+
+/* Flags are argv entries and read better in the shell's monospace stack, so —
+ * unlike the reference's row inputs — this one field stays monospaced. */
+.catalogInputMono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12px;
+}
+
+/* ── extensions: the staged-form footer ─────────────────────────────────── */
+
+/* The form's own save line, carried as a block inside the body the way the
+ * reference's footer sits under its fields: nothing the card edits reaches the
+ * Host until Apply. */
+.footer {
+    border-top: 0.5px solid var(--dsw-alias-border-l2);
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 12px 0 0;
+    display: flex;
+}
+
+.footerError {
+    color: var(--dsw-alias-label-error);
+    text-align: right;
+    min-width: 0;
+    flex: 1;
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+/* Same shape as the dialog's footer buttons: the reference footer's two-button
+ * save, with the primary carrying the save itself. */
+.footerButton {
+    border: 0.5px solid var(--dsw-alias-border-l3);
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--dsw-alias-label-secondary);
+    background: transparent;
+    padding: 5px 14px;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.footerButton:hover:not(:disabled) {
+    color: var(--dsw-alias-label-primary);
+    border-color: var(--dsw-alias-label-dimmed);
+}
+
+.footerButton:disabled {
+    cursor: default;
+    opacity: 0.4;
+}
+
+.footerButton:focus-visible {
+    outline: 2px solid var(--dsw-alias-brand-primary);
+    outline-offset: 1px;
+}
+
+.footerButtonPrimary {
+    color: var(--dsw-alias-bg-layer-3);
+    font-weight: 600;
+    background: var(--dsw-alias-label-primary);
+    border-color: transparent;
+}
+
+.footerButtonPrimary:hover:not(:disabled) {
+    color: var(--dsw-alias-bg-layer-3);
+    background: var(--dsw-alias-label-secondary);
+    border-color: transparent;
+}
+
+/* ── live lines, the editor controls and the summary line ──────────────────
+ *
+ * The families every keyed-list card needs: a live line with its state dot,
+ * the five editor controls (one line, lines, a KEY=value map, a choice, and a
+ * field declared by an extension), and the row's collapsed summary. They sit
+ * here rather than in one card's own sheet because each card would otherwise
+ * write them again, slightly differently. All tokens are the shell's.
+ */
+
+/* One live line: the identity line, its state, and the row's controls. */
+.liveLine {
+    align-items: center;
+    gap: 8px;
+    display: flex;
+    padding: 6px 10px;
+    border: 0.5px solid var(--dsw-alias-border-l3);
+    border-radius: 8px;
+    background: var(--dsw-alias-bg-layer-1);
+}
+
+.liveLine:hover {
+    border-color: var(--dsw-alias-border-l4);
+}
+
+/* The label half: its name plus the state, never competing for width. */
+.liveText {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.liveName {
+    color: var(--dsw-alias-label-primary);
+    font-size: 14px;
+    line-height: 20px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.liveState {
+    color: var(--dsw-alias-label-tertiary);
+    font-size: 12px;
+    line-height: 18px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* What the live entry actually published (its tool names, say). */
+.tools {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    color: var(--dsw-alias-label-tertiary);
+    font-size: 11px;
+    line-height: 16px;
+}
+
+.tools span {
+    padding: 0 6px;
+    border: 0.5px solid var(--dsw-alias-border-l3);
+    border-radius: 6px;
+    background: var(--dsw-alias-bg-module-platform);
+}
+
+/* The five editor controls, all reading off the same box. */
+.control {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    height: 28px;
+    padding: 0 10px;
+    border: 0.5px solid var(--dsw-alias-border-l4);
+    border-radius: 8px;
+    background: var(--dsw-alias-bg-layer-1);
+    color: var(--dsw-alias-label-primary);
+    font: inherit;
+    font-size: 14px;
+    line-height: 22px;
+}
+
+.control::placeholder {
+    color: var(--dsw-alias-label-dimmed);
+}
+
+.control:focus-visible {
+    outline: 2px solid var(--dsw-alias-brand-primary);
+    outline-offset: -1px;
+}
+
+.control:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.textarea {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    min-height: 64px;
+    padding: 6px 10px;
+    border: 0.5px solid var(--dsw-alias-border-l4);
+    border-radius: 8px;
+    background: var(--dsw-alias-bg-layer-1);
+    color: var(--dsw-alias-label-primary);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12px;
+    line-height: 18px;
+    resize: vertical;
+}
+
+.textarea:focus-visible {
+    outline: 2px solid var(--dsw-alias-brand-primary);
+    outline-offset: -1px;
+}
+
+.textarea:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.select {
+    box-sizing: border-box;
+    height: 28px;
+    min-width: 0;
+    padding: 0 8px;
+    border: 0.5px solid var(--dsw-alias-border-l4);
+    border-radius: 8px;
+    background: var(--dsw-alias-bg-module-platform);
+    color: var(--dsw-alias-label-primary);
+    font: inherit;
+    font-size: 13px;
+    line-height: 22px;
+}
+
+.select:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.checkbox {
+    margin: 0;
+    accent-color: var(--dsw-alias-brand-primary);
+}
+
+/* A stacked control: title, control, hint. */
+.controlField {
+    align-items: flex-start;
+    gap: 4px;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.controlTitle {
+    color: var(--dsw-alias-label-primary);
+    font-size: 12px;
+    line-height: 18px;
+}
+
+.controlField .control,
+.controlField .textarea {
+    margin-top: 2px;
+}
+
+/* A grid of controls: label column and control column, no card around it. */
+.grid {
+    display: grid;
+    grid-template-columns: minmax(96px, 20%) minmax(0, 1fr);
+    gap: 6px 10px;
+    align-items: center;
+    width: 100%;
+}
+
+.grid > label {
+    color: var(--dsw-alias-label-tertiary);
+    font-size: 12px;
+    line-height: 18px;
+}
+
+/* The whole editor: fields, its action line, and the transport readout. */
+.editor {
+    gap: 10px;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    border: 0.5px solid var(--dsw-alias-border-l3);
+    border-radius: 10px;
+    background: var(--dsw-alias-bg-layer-1);
+}
+
+.editorTitle {
+    color: var(--dsw-alias-label-primary);
+    font-size: 14px;
+    line-height: 20px;
+}
+
+.editorHint {
+    color: var(--dsw-alias-label-tertiary);
+    font-size: 12px;
+    line-height: 18px;
+}
+
+.editorActions {
+    align-items: center;
+    gap: 8px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* What the transport resolves to — a readout, never an editable line. */
+.transport {
+    color: var(--dsw-alias-label-tertiary);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12px;
+    line-height: 18px;
+    word-break: break-all;
+}
+
+/* The row's collapsed state, under the row title. */
+.summary {
+    color: var(--dsw-alias-label-secondary);
+    font-size: 13px;
+    line-height: 20px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.summaryItem {
+    color: var(--dsw-alias-label-primary);
+    font-size: 13px;
+    line-height: 20px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.summaryNone {
+    color: var(--dsw-alias-label-tertiary);
+    font-size: 13px;
+    line-height: 20px;
+}
+
+.summaryBroken {
+    color: var(--dsw-alias-state-error-primary);
+    font-size: 13px;
+    line-height: 20px;
+}
+
+/* ── toasts ───────────────────────────────────────────────────────────────
+ * The page-wide root the `toasts` hole stands, and the one node per card the
+ * mirror paints into it. The root is positioned once per page (two cards, two
+ * plugins, one root), so the notices answer the same corner everywhere; the
+ * node carries the kind it came from (`error` or `stall`) as a dataset
+ * attribute, which is what these rules read.
+ */
+.toastRoot {
+    z-index: 2147483000;
+    flex-direction: column;
+    gap: 8px;
+    display: flex;
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    max-width: min(360px, 50vw);
+}
+
+.toast {
+    border: 0.5px solid var(--dsw-alias-border-l3);
+    border-radius: 10px;
+    background: var(--dsw-alias-bg-layer-1);
+    color: var(--dsw-alias-label-secondary);
+    padding: 8px 10px;
+    font-size: 12px;
+    line-height: 18px;
+    box-shadow: 0 4px 12px rgb(0 0 0 / 12%);
+    overflow-wrap: anywhere;
+}
+
+.toast[data-notice-kind="error"] {
+    border-color: var(--dsw-alias-state-error-primary);
+    color: var(--dsw-alias-label-primary);
+}
+
+.toast[data-notice-kind="stall"] {
+    border-color: var(--dsw-alias-border-l4);
+    color: var(--dsw-alias-label-tertiary);
+}
+
+/* ---- Composer pills (R6) ------------------------------------------------
+ * The conversation input's tool-row pill, promoted from the docker card: the
+ * shell's own mode/model pill shape. The mark rides `currentColor`, so it
+ * follows the theme and the disabled state without rules of its own. */
+.composerPills {
+    display: inline-flex;
+    gap: 4px;
+}
+
+.composerPillRoot {
+    display: flex;
+}
+
+.composerPill {
+    min-width: 0;
+    max-width: 220px;
+    height: 28px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 20px;
+    color: var(--dsw-alias-label-secondary);
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    border-radius: 24px;
+    outline: none;
+    align-items: center;
+    gap: 4px;
+    padding: 0 4px 0 8px;
+    display: inline-flex;
+}
+
+.composerPill:hover:not(:disabled) {
+    background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.composerPill:disabled {
+    cursor: default;
+}
+
+.composerPillIcon {
+    flex: none;
+    display: inline-flex;
+    color: var(--dsw-alias-label-secondary);
+}
+
+.composerPillLabel {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.composerPillChevron {
+    color: var(--dsw-alias-label-caption);
+    flex: none;
+    transition: transform 0.12s;
+    display: inline-flex;
+}
+
+.composerPillChevronOpen {
+    transform: rotate(180deg);
+}

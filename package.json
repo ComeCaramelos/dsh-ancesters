@@ -1,0 +1,73 @@
+{
+    "name": "@comecaramelos/dsh-ancesters",
+    "description": "Shared base layer for DeepSeek Harness plugins.",
+    "author": "ComeCaramelos <hello@comecaramelos.com>",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/ComeCaramelos/dsh-ancesters.git"
+    },
+    "bugs": {
+        "url": "https://github.com/ComeCaramelos/dsh-ancesters/issues"
+    },
+    "homepage": "https://github.com/ComeCaramelos/dsh-ancesters#readme",
+    "version": "0.0.1",
+    "license": "MIT",
+    "type": "module",
+    "exports": {
+        ".": {
+            "types": "./lib/host/index.d.ts",
+            "default": "./lib/host/index.js"
+        },
+        "./host": {
+            "types": "./lib/host/index.d.ts",
+            "default": "./lib/host/index.js"
+        },
+        "./client": {
+            "types": "./lib/client.d.ts",
+            "default": "./lib/client.js"
+        },
+        "./client/source": {
+            "types": "./lib/client.d.ts",
+            "default": "./lib/client.esm.js"
+        },
+        "./client/blocks": {
+            "types": "./lib/blocks.d.ts",
+            "default": "./lib/blocks.js"
+        },
+        "./styles": {
+            "types": "./lib/styles.d.ts",
+            "default": "./lib/styles.js"
+        },
+        "./locales": {
+            "types": "./lib/locales.d.ts",
+            "default": "./lib/locales.js"
+        },
+        "./package.json": "./package.json"
+    },
+    "files": [
+        "lib"
+    ],
+    "engines": {
+        "node": ">=20",
+        "dsh": "^0.2.0-0"
+    },
+    "scripts": {
+        "build": "npm run build:host && npm run build:client",
+        "build:host": "tsc",
+        "build:client": "tsc -p src/client/tsconfig.json && node scripts/build-client.mjs",
+        "clean": "node -e \"require('node:fs').rmSync('lib', { recursive: true, force: true })\"",
+        "dev": "tsc --watch",
+        "prepack": "npm run build",
+        "test": "npm run build && node --test \"test/*.test.mjs\""
+    },
+    "devDependencies": {
+        "@types/cross-spawn": "^6.0.6",
+        "@types/node": "^24.0.0",
+        "@types/react": "^19.3.0",
+        "esbuild": "^0.25.12",
+        "typescript": "^5.9.3"
+    },
+    "dependencies": {
+        "cross-spawn": "^7.0.6"
+    }
+}

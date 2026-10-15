@@ -1,0 +1,18 @@
+# Dev
+.probe/
+_reference/
+docs/*
+!docs/knowledge/
+
+# Dependencies
+node_modules/
+
+# Build / dist
+dist/
+lib/
+*.tsbuildinfo
+*.tsbuildinfo.tmp
+lib.tsbuildinfo
+
+# Local scratch
+*.log
